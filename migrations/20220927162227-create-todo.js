@@ -30,6 +30,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    queryInterface.dropTable('Todos');
+    await queryInterface.dropTable('Todos');
   }
 };
