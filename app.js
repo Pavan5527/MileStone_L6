@@ -18,10 +18,6 @@ app.get("/todos", async function (_request, response) {
     console.log(error);
     return response.status(422).json(error);
   }
-
-  // First, we have to query our PostgerSQL database using Sequelize to get list of all Todos.
-  // Then, we have to respond with all Todos, like:
-  // response.send(todos)
 });
 
 app.get("/todos/:id", async function (request, response) {
@@ -62,7 +58,6 @@ app.delete("/todos/:id", async function (request, response) {
   response.send(deleteTodo ? true : false);
   // First, we have to query our database to delete a Todo by ID.
   // Then, we have to respond back with true/false based on whether the Todo was deleted or not.
-  // response.send(true)
 });
 
 module.exports = app;
