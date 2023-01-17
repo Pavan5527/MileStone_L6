@@ -7,70 +7,131 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-
     static associate(models) {
       // define association here
+      Todo.belongsTo(models.User, {
+        foreignKey: "userId",
+      });
     }
 
-    static addTodo({ title, dueDate }) {
-      return this.create({ title: title, dueDate: dueDate, completed: false });
+    static addTodo({ title, dueDate, userId }) {
+      return this.create({
+        title: title,
+        dueDate: dueDate,
+        completed: false,
+        userId,
+      });
     }
 
+    markAsCompleted() {
+      return this.update({ completed: true });
+    }
     static getTodos() {
       return this.findAll();
     }
-
-    // markAsCompleted() {
-    //   return this.update({ completed: true });
-    // }
-    static async overdue() {
-      return await Todo.findAll({
+    static getOverDueTodos() {
+      var today = new Date();
+      console.log(today);
+      return this.findAll({
         where: {
-          dueDate: { [Op.lt]: new Date().toLocaleDateString("en-CA") },
-          completed: false,
-        },
-        order: [["id", "ASC"]],
-      });
-    }
-    static async dueToday() {
-      return await Todo.findAll({
-        where: {
-          dueDate: { [Op.eq]: new Date().toLocaleDateString("en-CA") },
-          completed: false,
-        },
-        order: [["id", "ASC"]],
-      });
-    }
-    static async dueLater() {
-      return await Todo.findAll({
-        where: {
-          dueDate: { [Op.gt]: new Date().toLocaleDateString("en-CA") },
-          completed: false,
-        },
-        order: [["id", "ASC"]],
-      });
-    }
-
-    static async completedTodos() {
-      return await Todo.findAll({
-        where: { completed: true },
-      });
-    }
-    static async remove(id) {
-      return this.destroy({
-        where: {
-          id,
+          dueDate: {
+            [Op.lt]: today,
+          },
         },
       });
     }
     setCompletionStatus(completed) {
-      return this.update({ completed: completed });
+      return this.update({
+        completed: completed,
+      });
+    }
+    static async remove(id, userId) {
+      return this.destroy({
+        where: {
+          id,
+          userId,
+        },
+      });
+    }
+    static async getAllTodos(userId) {
+      const overdueLists = await Todo.overdue(userId);
+
+      const dueTodayLists = await Todo.dueToday(userId);
+
+      const dueLaterLists = await Todo.dueLater(userId);
+      const completedItems = await Todo.getCompletedItems(userId);
+
+      return { overdueLists, dueTodayLists, dueLaterLists, completedItems };
+    }
+
+    static async overdue(userId) {
+      // FILL IN HERE TO RETURN OVERDUE ITEMS
+      return Todo.findAll({
+        where: {
+          dueDate: {
+            [Op.lt]: new Date(),
+          },
+          userId,
+          completed: false,
+        },
+      });
+    }
+
+    static async dueToday(userId) {
+      // FILL IN HERE TO RETURN ITEMS DUE tODAY
+      return Todo.findAll({
+        where: {
+          dueDate: {
+            [Op.eq]: new Date(),
+          },
+          userId,
+          completed: false,
+        },
+        order: [["id", "ASC"]],
+      });
+    }
+
+    static async dueLater(userId) {
+      // FILL IN HERE TO RETURN ITEMS DUE LATER
+      return Todo.findAll({
+        where: {
+          dueDate: {
+            [Op.gt]: new Date(),
+          },
+          userId,
+          completed: false,
+        },
+        order: [["id", "ASC"]],
+      });
+    }
+    static async getCompletedItems(userId) {
+      // FILL IN HERE TO RETURN ITEMS DUE LATER
+      return Todo.findAll({
+        where: {
+          userId,
+          completed: true,
+        },
+        order: [["id", "ASC"]],
+      });
     }
   }
   Todo.init(
     {
-      title: DataTypes.STRING,
-      dueDate: DataTypes.DATEONLY,
+      title: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+          notNull: true,
+          len: 5,
+        },
+      },
+      dueDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+        validate: {
+          notNull: true,
+        },
+      },
       completed: DataTypes.BOOLEAN,
     },
     {
